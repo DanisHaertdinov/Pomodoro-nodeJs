@@ -5,7 +5,11 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 const arg = process.argv[2]
+
 const WORK_TIME = 50000;
+const REST_TIME = 20000;
+const LONG_REST_TIME = 40000;
+const LONG_REST_COUNT = 4;
 
 const Commands = {
     RUN: `run`,
@@ -16,16 +20,22 @@ const Commands = {
 let timerId = null;
 let startTime = null;
 let remainingTime = null;
+let isRestTime = false;
+let pomodoroCount = 0;
 
-const timer = () => {
+const isBigRestTime = () => {
+    return  pomodoroCount / LONG_REST_COUNT === 0;
+}
+
+const timer = (duration, callback, command) => {
     switch (command) {
         case Commands.RUN:
             console.log(`Pomodoro starts`)
             startTime = Date.now()
-            remainingTime = WORK_TIME;
+            remainingTime = duration;
             timerId = setTimeout(() => {
-                console.log(`get rest`)
-            }, WORK_TIME)
+                callback();
+            }, duration)
             break;
         case Commands.PAUSE:
             clearTimeout(timerId);
@@ -36,9 +46,34 @@ const timer = () => {
             console.log(`Pomodoro resume`)
             startTime = Date.now()
             timerId = setTimeout(() => {
-                console.log(`get rest`)
+                callback();
             }, remainingTime)
     }
+}
+
+const setupTimer = (command) => {
+    if (isRestTime) {
+        const duration = isBigRestTime() ? LONG_REST_TIME : REST_TIME
+
+        timer(
+            duration,
+            () => {
+            console.log(`prepare to new challenge`);
+            isRestTime = false
+            },
+            command
+        )
+        return;
+    }
+
+    timer(
+        WORK_TIME,
+        () => {
+            console.log(`take a short break`);
+            isRestTime = true;
+        },
+        command
+    )
 }
 
 const main = async () => {
@@ -47,7 +82,7 @@ const main = async () => {
     }
 
     rl.on('line', (input) => {
-        timer(input)
+        setupTimer(input)
     });
 };
 
