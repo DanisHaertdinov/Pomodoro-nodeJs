@@ -20,10 +20,9 @@ const Commands = {
 let timerId = null;
 let startTime = null;
 let remainingTime = null;
-let isRestTime = false;
 let pomodoroCount = 0;
 
-const isBigRestTime = () => {
+const isLongRestTime = () => {
     return  pomodoroCount / LONG_REST_COUNT === 0;
 }
 
@@ -52,25 +51,20 @@ const timer = (duration, callback, command) => {
 }
 
 const setupTimer = (command) => {
-    if (isRestTime) {
-        const duration = isBigRestTime() ? LONG_REST_TIME : REST_TIME
-
-        timer(
-            duration,
-            () => {
-            console.log(`prepare to new challenge`);
-            isRestTime = false
-            },
-            command
-        )
-        return;
-    }
-
     timer(
         WORK_TIME,
         () => {
-            console.log(`take a short break`);
-            isRestTime = true;
+            const duration = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
+            const message = isLongRestTime() ? `take a short break` : `well done take a long break`;
+            console.log(message);
+
+            timer(
+                duration,
+                () => {
+                    console.log(`prepare to new challenge`);
+                },
+                Commands.RUN
+            )
         },
         command
     )
@@ -78,7 +72,7 @@ const setupTimer = (command) => {
 
 const main = async () => {
     if (arg) {
-        timer(arg)
+        setupTimer(arg)
     }
 
     rl.on('line', (input) => {
