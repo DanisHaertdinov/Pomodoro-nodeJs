@@ -7,8 +7,8 @@ const rl = readline.createInterface({
 const arg = process.argv[2]
 
 const WORK_TIME = 50000;
-const REST_TIME = 20000;
-const LONG_REST_TIME = 40000;
+const REST_TIME = 2000;
+const LONG_REST_TIME = 4000;
 const LONG_REST_COUNT = 4;
 
 const Commands = {
@@ -29,10 +29,14 @@ const isLongRestTime = () => {
 const timer = (duration, callback, command) => {
     switch (command) {
         case Commands.RUN:
+            if (timerId !== null) {
+                return
+            }
             console.log(`Pomodoro starts`)
             startTime = Date.now()
             remainingTime = duration;
             timerId = setTimeout(() => {
+                timerId = null;
                 callback();
             }, duration)
             break;
@@ -62,8 +66,10 @@ const setupTimer = (command) => {
                 duration,
                 () => {
                     console.log(`prepare to new challenge`);
+                    pomodoroCount++;
                 },
                 Commands.RUN
+
             )
         },
         command
