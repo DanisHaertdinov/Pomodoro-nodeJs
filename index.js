@@ -6,9 +6,9 @@ const rl = readline.createInterface({
 });
 const arg = process.argv[2]
 
-const WORK_TIME = 50000;
-const REST_TIME = 2000;
-const LONG_REST_TIME = 4000;
+const WORK_TIME = 5  * 1000;
+const REST_TIME = 2 * 1000;
+const LONG_REST_TIME = 4 * 1000;
 const LONG_REST_COUNT = 4;
 
 const Commands = {
@@ -32,25 +32,26 @@ const timer = (duration, callback, command) => {
             if (timerId !== null) {
                 return
             }
-            console.log(`Pomodoro starts`)
+            console.log(`Pomodoro starts`);
             startTime = Date.now()
             remainingTime = duration;
             timerId = setTimeout(() => {
                 timerId = null;
                 callback();
-            }, duration)
+            }, duration);
             break;
         case Commands.PAUSE:
             clearTimeout(timerId);
             remainingTime -= (Date.now() - startTime);
-            console.log(`on pause ${remainingTime / 1000} seconds remaining`)
+            console.log(`on pause ${remainingTime / 1000} seconds remaining`);
             break;
         case Commands.RESUME:
-            console.log(`Pomodoro resume`)
-            startTime = Date.now()
+            console.log(`Pomodoro resume`);
+            startTime = Date.now();
             timerId = setTimeout(() => {
+                timerId = null;
                 callback();
-            }, remainingTime)
+            }, remainingTime);
     }
 }
 
@@ -69,7 +70,6 @@ const setupTimer = (command) => {
                     pomodoroCount++;
                 },
                 Commands.RUN
-
             )
         },
         command
