@@ -26,7 +26,7 @@ const isLongRestTime = () => {
     return  pomodoroCount / LONG_REST_COUNT === 0;
 }
 
-const timer = (duration, callback, command) => {
+const timer = (callback,duration, command) => {
     switch (command) {
         case Commands.RUN:
             if (timerId !== null) {
@@ -57,21 +57,21 @@ const timer = (duration, callback, command) => {
 
 const setupTimer = (command) => {
     timer(
-        WORK_TIME,
         () => {
             const duration = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
             const message = isLongRestTime() ? `take a short break` : `well done take a long break`;
             console.log(message);
 
             timer(
-                duration,
                 () => {
                     console.log(`prepare to new challenge`);
                     pomodoroCount++;
                 },
+                duration,
                 Commands.RUN
             )
         },
+        WORK_TIME,
         command
     )
 }
