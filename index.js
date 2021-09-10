@@ -27,7 +27,7 @@ const isLongRestTime = () => {
 }
 
 const sendMessage = (message) => {
-    console.log(message)
+    console.log(message);
 }
 
 const setTimer = (callback,duration, command) => {
