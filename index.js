@@ -26,13 +26,17 @@ const isLongRestTime = () => {
     return  pomodoroCount / LONG_REST_COUNT === 0;
 }
 
+const sendMessage = (message) => {
+    console.log(message);
+}
+
 const setTimer = (callback,duration, command) => {
     switch (command) {
         case Commands.RUN:
             if (timerId !== null) {
                 return
             }
-            console.log(`Pomodoro starts`);
+            sendMessage(`Pomodoro starts`);
             startTime = Date.now()
             remainingTime = duration;
             timerId = setTimeout(() => {
@@ -43,10 +47,10 @@ const setTimer = (callback,duration, command) => {
         case Commands.PAUSE:
             clearTimeout(timerId);
             remainingTime -= (Date.now() - startTime);
-            console.log(`on pause ${remainingTime / 1000} seconds remaining`);
+            sendMessage(`on pause ${remainingTime / 1000} seconds remaining`);
             break;
         case Commands.RESUME:
-            console.log(`Pomodoro resume`);
+            sendMessage(`Pomodoro resume`);
             startTime = Date.now();
             timerId = setTimeout(() => {
                 timerId = null;
@@ -60,11 +64,11 @@ const setupTimer = (command) => {
         () => {
             const duration = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
             const message = isLongRestTime() ? `take a short break` : `well done take a long break`;
-            console.log(message);
+            sendMessage(message);
 
             setTimer(
                 () => {
-                    console.log(`prepare to new challenge`);
+                    sendMessage(`prepare to new challenge`);
                     pomodoroCount++;
                 },
                 duration,
