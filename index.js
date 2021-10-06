@@ -7,6 +7,7 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 const arg = process.argv[2]
+const player = new StupidPlayer();
 
 const WORK_TIME = 15  * 1000;
 const REST_TIME = 12 * 1000;
@@ -20,10 +21,7 @@ const Commands = {
     PAUSE: `pause`,
 };
 
-
-
 const playSound = async (soundPath, duration = 10) => {
-    const player = new StupidPlayer();
     const readStream = await StupidPlayer.getReadStream(soundPath);
     await player.play(readStream);
     setTimeout(() => {

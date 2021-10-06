@@ -21,6 +21,6 @@
     "eslint-config-google": "0.14.0"
   },
   "dependencies": {
-    "stupid-player": "0.4.1"
+    "stupid-player": "0.4.2"
   }
 }
