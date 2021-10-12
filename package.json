@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "eslint": "eslint \"**/*.js\""
+    "eslint": "eslint \"**/*.js\"",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
@@ -20,9 +21,19 @@
     "eslint": "8.0.0",
     "eslint-config-google": "0.14.0",
     "eslint-config-prettier": "^8.3.0",
+    "husky": "^7.0.2",
+    "lint-staged": "^11.2.3",
     "prettier": "2.4.1"
   },
   "dependencies": {
     "stupid-player": "0.4.2"
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier --write",
+      "eslint --fix",
+      "git add"
+    ],
+    "*.{js,css,md}": "prettier --write"
   }
 }
