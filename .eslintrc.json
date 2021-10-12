@@ -1,12 +1,19 @@
 {
   "parserOptions": {
-    "ecmaVersion": 2017
+    "ecmaVersion": 2020
   },
+
 
   "env": {
     "es6": true,
     "node": true
   },
 
-  "extends": ["eslint:recommended", "google", "prettier"]
+  "extends": ["eslint:recommended", "google", "prettier"],
+
+  "rules": {
+    "require-jsdoc": "off"
+  },
+
+  "parser": "@babel/eslint-parser",
 }
