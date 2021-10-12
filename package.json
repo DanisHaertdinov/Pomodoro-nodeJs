@@ -18,7 +18,9 @@
   "homepage": "https://github.com/DanisHaertdinov/Pomodoro-nodeJs#readme",
   "devDependencies": {
     "eslint": "8.0.0",
-    "eslint-config-google": "0.14.0"
+    "eslint-config-google": "0.14.0",
+    "eslint-config-prettier": "^8.3.0",
+    "prettier": "2.4.1"
   },
   "dependencies": {
     "stupid-player": "0.4.2"

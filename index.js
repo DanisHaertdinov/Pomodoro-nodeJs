@@ -1,6 +1,6 @@
-const readline = require('readline');
-const StupidPlayer = require('stupid-player').StupidPlayer;
-const path = require('path');
+const readline = require("readline");
+const StupidPlayer = require("stupid-player").StupidPlayer;
+const path = require("path");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -13,7 +13,7 @@ const WORK_TIME = 15 * 1000;
 const REST_TIME = 12 * 1000;
 const LONG_REST_TIME = 14 * 1000;
 const LONG_REST_COUNT = 4;
-const SOUND_PATH = path.resolve('./sounds/sound.mp3');
+const SOUND_PATH = path.resolve("./sounds/sound.mp3");
 
 const Commands = {
   RUN: `run`,
@@ -57,7 +57,7 @@ const setTimer = (callback, duration, command) => {
       break;
     case Commands.PAUSE:
       clearTimeout(timerId);
-      remainingTime -= (Date.now() - startTime);
+      remainingTime -= Date.now() - startTime;
       sendMessage(`on pause ${remainingTime / 1000} seconds remaining`);
       break;
     case Commands.RESUME:
@@ -73,23 +73,25 @@ const setTimer = (callback, duration, command) => {
 const setupPomodoro = (command) => {
   sendMessage(`Pomodoro starts`);
   setTimer(
-      async () => {
-        const duration = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
-        const message = isLongRestTime() ? `take a short break` : `well done take a long break`;
-        sendMessage(message);
-        await playSound(SOUND_PATH);
-        setTimer(
-            async () => {
-              await playSound(SOUND_PATH);
-              sendMessage(`prepare to new challenge`);
-              pomodoroCount++;
-            },
-            duration,
-            Commands.RUN,
-        );
-      },
-      WORK_TIME,
-      command,
+    async () => {
+      const duration = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
+      const message = isLongRestTime()
+        ? `take a short break`
+        : `well done take a long break`;
+      sendMessage(message);
+      await playSound(SOUND_PATH);
+      setTimer(
+        async () => {
+          await playSound(SOUND_PATH);
+          sendMessage(`prepare to new challenge`);
+          pomodoroCount++;
+        },
+        duration,
+        Commands.RUN
+      );
+    },
+    WORK_TIME,
+    command
   );
 };
 
@@ -98,10 +100,9 @@ const main = () => {
     setupPomodoro(arg);
   }
 
-  rl.on('line', (input) => {
+  rl.on("line", (input) => {
     setupPomodoro(input);
   });
 };
 
 main();
-
