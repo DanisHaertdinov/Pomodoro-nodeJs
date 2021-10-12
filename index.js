@@ -21,12 +21,35 @@ const Commands = {
   PAUSE: `pause`,
 };
 
+class Timer {
+  #startTime = null;
+  #remainingTime = null;
+  #timerId = null;
+
+  start(duration) {
+    this.#startTime = Date.now();
+    this.#remainingTime = this.#timerId ? this.#remainingTime : duration;
+
+    return new Promise((resolve) => {
+      this.#timerId = setTimeout(() => {
+        this.#timerId = null;
+        resolve();
+      }, this.#remainingTime);
+    });
+  }
+
+  pause() {
+    clearTimeout(this.#timerId);
+    this.#remainingTime -= Date.now() - this.#startTime;
+  }
+}
+
 const playSound = async (soundPath, duration = 10) => {
+  const timer = new Timer();
   const readStream = await StupidPlayer.getReadStream(soundPath);
   await player.play(readStream);
-  setTimeout(() => {
-    player.stop();
-  }, duration * 1000);
+  await timer.start(duration * 1000);
+  await player.stop();
 };
 
 let timerId = null;
