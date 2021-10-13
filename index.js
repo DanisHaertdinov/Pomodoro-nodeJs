@@ -23,38 +23,50 @@ const Commands = {
 
 class Timer {
   #startTime = null;
-  #remainingTime = null;
+  remainingTime = null;
   #timerId = null;
 
   start(duration) {
     this.#startTime = Date.now();
-    this.#remainingTime = this.#timerId ? this.#remainingTime : duration;
+    this.remainingTime = this.#timerId ? this.remainingTime : duration;
 
     return new Promise((resolve) => {
       this.#timerId = setTimeout(() => {
-        this.#timerId = null;
+        this.reset();
         resolve();
-      }, this.#remainingTime);
+      }, this.remainingTime);
     });
   }
 
   pause() {
     clearTimeout(this.#timerId);
-    this.#remainingTime -= Date.now() - this.#startTime;
+    this.remainingTime -= Date.now() - this.#startTime;
+  }
+
+  reset() {
+    this.#startTime = null;
+    this.remainingTime = null;
+    this.#timerId = null;
   }
 }
 
-const playSound = async (soundPath, duration = 10) => {
+const playSound = (soundPath, duration = 10) => {
   const timer = new Timer();
-  const readStream = await StupidPlayer.getReadStream(soundPath);
-  await player.play(readStream);
-  await timer.start(duration * 1000);
-  await player.stop();
+  StupidPlayer.getReadStream(soundPath)
+    .then((readStream) => {
+      return player.play(readStream);
+    })
+    .then(() => {
+      return timer.start(duration * 1000);
+    })
+    .then(() => {
+      return player.stop();
+    });
 };
 
-let timerId = null;
-let startTime = null;
-let remainingTime = null;
+const pomodoroWorkTimer = new Timer();
+const pomodoroRestTimer = new Timer();
+let activeTimer = null;
 let pomodoroCount = 0;
 
 const isLongRestTime = () => {
@@ -65,66 +77,58 @@ const sendMessage = (message) => {
   console.log(message);
 };
 
-const setTimer = (callback, duration, command) => {
+const setWorkTimer = async () => {
+  activeTimer = pomodoroWorkTimer;
+  const message = isLongRestTime()
+    ? `take a short break`
+    : `well done take a long break`;
+
+  await pomodoroWorkTimer.start(WORK_TIME);
+
+  sendMessage(message);
+  playSound(SOUND_PATH);
+};
+
+const setRestTimer = async () => {
+  activeTimer = pomodoroRestTimer;
+  const duration = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
+
+  await pomodoroRestTimer.start(duration);
+
+  sendMessage(`prepare to new challenge`);
+  playSound(SOUND_PATH);
+  pomodoroCount++;
+};
+
+const setTimer = async (command) => {
   switch (command) {
     case Commands.RUN:
-      if (timerId !== null) {
+      if (activeTimer !== null) {
         return;
       }
-      startTime = Date.now();
-      remainingTime = duration;
-      timerId = setTimeout(() => {
-        timerId = null;
-        callback();
-      }, duration);
+      sendMessage(`Pomodoro starts`);
+      await setWorkTimer();
+      await setRestTimer();
       break;
     case Commands.PAUSE:
-      clearTimeout(timerId);
-      remainingTime -= Date.now() - startTime;
-      sendMessage(`on pause ${remainingTime / 1000} seconds remaining`);
+      activeTimer.pause();
+      sendMessage(
+        `on pause ${activeTimer.remainingTime / 1000} seconds remaining`
+      );
       break;
     case Commands.RESUME:
       sendMessage(`Pomodoro resume`);
-      startTime = Date.now();
-      timerId = setTimeout(() => {
-        timerId = null;
-        callback();
-      }, remainingTime);
+      await activeTimer.start();
   }
-};
-
-const setupPomodoro = (command) => {
-  sendMessage(`Pomodoro starts`);
-  setTimer(
-    async () => {
-      const duration = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
-      const message = isLongRestTime()
-        ? `take a short break`
-        : `well done take a long break`;
-      sendMessage(message);
-      await playSound(SOUND_PATH);
-      setTimer(
-        async () => {
-          await playSound(SOUND_PATH);
-          sendMessage(`prepare to new challenge`);
-          pomodoroCount++;
-        },
-        duration,
-        Commands.RUN
-      );
-    },
-    WORK_TIME,
-    command
-  );
 };
 
 const main = () => {
   if (arg) {
-    setupPomodoro(arg);
+    setTimer(arg);
   }
 
   rl.on("line", (input) => {
-    setupPomodoro(input);
+    setTimer(input);
   });
 };
 
