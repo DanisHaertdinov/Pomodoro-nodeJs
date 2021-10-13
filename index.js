@@ -68,6 +68,8 @@ const pomodoroWorkTimer = new Timer();
 const pomodoroRestTimer = new Timer();
 let activeTimer = null;
 let pomodoroCount = 0;
+let remainingTime = WORK_TIME;
+let isWorkTime = true;
 
 const isLongRestTime = () => {
   return pomodoroCount / LONG_REST_COUNT === 0;
@@ -83,7 +85,7 @@ const setWorkTimer = async () => {
     ? `take a short break`
     : `well done take a long break`;
 
-  await pomodoroWorkTimer.start(WORK_TIME);
+  await pomodoroWorkTimer.start(remainingTime);
 
   sendMessage(message);
   playSound(SOUND_PATH);
@@ -91,44 +93,55 @@ const setWorkTimer = async () => {
 
 const setRestTimer = async () => {
   activeTimer = pomodoroRestTimer;
-  const duration = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
 
-  await pomodoroRestTimer.start(duration);
+  await pomodoroRestTimer.start(remainingTime);
 
   sendMessage(`prepare to new challenge`);
   playSound(SOUND_PATH);
   pomodoroCount++;
 };
 
-const setTimer = async (command) => {
+const setTimers = async () => {
+  if (isWorkTime) {
+    await setWorkTimer();
+    remainingTime = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
+    isWorkTime = false;
+    return await setTimers();
+  }
+
+  await setRestTimer();
+  isWorkTime = true;
+};
+
+const setupPomodoro = async (command) => {
   switch (command) {
     case Commands.RUN:
       if (activeTimer !== null) {
         return;
       }
       sendMessage(`Pomodoro starts`);
-      await setWorkTimer();
-      await setRestTimer();
+      await setTimers();
       break;
     case Commands.PAUSE:
       activeTimer.pause();
+      remainingTime = activeTimer.remainingTime;
       sendMessage(
         `on pause ${activeTimer.remainingTime / 1000} seconds remaining`
       );
       break;
     case Commands.RESUME:
       sendMessage(`Pomodoro resume`);
-      await activeTimer.start();
+      await setTimers();
   }
 };
 
 const main = () => {
   if (arg) {
-    setTimer(arg);
+    setupPomodoro(arg);
   }
 
   rl.on("line", (input) => {
-    setTimer(input);
+    setupPomodoro(input);
   });
 };
 
