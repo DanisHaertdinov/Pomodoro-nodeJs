@@ -1,6 +1,7 @@
 const readline = require("readline");
 const StupidPlayer = require("stupid-player").StupidPlayer;
 const path = require("path");
+const Timer = require('./timer');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -21,33 +22,27 @@ const Commands = {
   PAUSE: `pause`,
 };
 
-class Timer {
-  #startTime = null;
-  remainingTime = null;
-  #timerId = null;
+const Status = {
+  IDLE: `idle`,
+  WORK: `work`,
+  REST: `rest`,
+};
 
-  start(duration) {
-    this.#startTime = Date.now();
-    this.remainingTime = this.#timerId ? this.remainingTime : duration;
-
-    return new Promise((resolve) => {
-      this.#timerId = setTimeout(() => {
-        this.reset();
-        resolve();
-      }, this.remainingTime);
+class Deferred {
+  constructor() {
+    this._promise = new Promise((resolve, reject) => {
+        this._resolve = resolve;
+        this._reject = reject;
     });
   }
-
-  pause() {
-    clearTimeout(this.#timerId);
-    this.remainingTime -= Date.now() - this.#startTime;
+  getPromise() {
+    return this._promise;
+  }
+  resolve() {
+    this._resolve();
   }
 
-  reset() {
-    this.#startTime = null;
-    this.remainingTime = null;
-    this.#timerId = null;
-  }
+  reject() {}
 }
 
 const playSound = (soundPath, duration = 10) => {
@@ -70,6 +65,7 @@ let activeTimer = null;
 let pomodoroCount = 0;
 let remainingTime = WORK_TIME;
 let isWorkTime = true;
+let status = Status.IDLE;
 
 const isLongRestTime = () => {
   return pomodoroCount / LONG_REST_COUNT === 0;
@@ -79,7 +75,8 @@ const sendMessage = (message) => {
   console.log(message);
 };
 
-const setWorkTimer = async () => {
+const startWorkTimer = async () => {
+  status = Status.WORK;
   activeTimer = pomodoroWorkTimer;
   const message = isLongRestTime()
     ? `take a short break`
@@ -91,7 +88,8 @@ const setWorkTimer = async () => {
   playSound(SOUND_PATH);
 };
 
-const setRestTimer = async () => {
+const startRestTimer = async () => {
+  status = Status.REST;
   activeTimer = pomodoroRestTimer;
 
   await pomodoroRestTimer.start(remainingTime);
@@ -101,26 +99,45 @@ const setRestTimer = async () => {
   pomodoroCount++;
 };
 
-const setTimers = async () => {
-  if (isWorkTime) {
-    await setWorkTimer();
+let deferred = new Deferred();
+
+const iteration = async (status) => {
+  switch (status) {
+    case Status.WORK:
+      await startWorkTimer();  
+      break;
+  }
+}
+
+const statuses = [Status.WORK, Status.REST, Status.WORK, Status.REST, Status.WORK, Status.LONG_REST];
+
+for (c of statuses) {
+  await iteration(c);
+}
+
+const startTimers = async () => {
+  if (status === Status.IDLE || status === Status.WORK) {
+    await startWorkTimer();
     remainingTime = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
-    isWorkTime = false;
-    return await setTimers();
+    return await startTimers();
   }
 
-  await setRestTimer();
-  isWorkTime = true;
+
+  await startRestTimer();
+  status = Status.IDLE;
 };
+
+// workTime -> restTime
 
 const setupPomodoro = async (command) => {
   switch (command) {
     case Commands.RUN:
-      if (activeTimer !== null) {
+      if (status !== Status.IDLE) {
         return;
       }
       sendMessage(`Pomodoro starts`);
-      await setTimers();
+      status = Status.WORK;
+      await startTimers();
       break;
     case Commands.PAUSE:
       activeTimer.pause();
@@ -131,7 +148,7 @@ const setupPomodoro = async (command) => {
       break;
     case Commands.RESUME:
       sendMessage(`Pomodoro resume`);
-      await setTimers();
+      await startTimers();
   }
 };
 
