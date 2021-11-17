@@ -48,40 +48,6 @@ const sendMessage = (message) => {
   console.log(message);
 };
 
-// const setWorkTimer = async () => {
-//   activeTimer = pomodoroWorkTimer;
-//   const message = isLongRestTime()
-//     ? `take a short break`
-//     : `well done take a long break`;
-//
-//   await pomodoroWorkTimer.start(remainingTime);
-//
-//   sendMessage(message);
-//   playSound(SOUND_PATH);
-// };
-//
-// const setRestTimer = async () => {
-//   activeTimer = pomodoroRestTimer;
-//
-//   await pomodoroRestTimer.start(remainingTime);
-//
-//   sendMessage(`prepare to new challenge`);
-//   playSound(SOUND_PATH);
-//   pomodoroCount++;
-// };
-//
-// const setTimers = async () => {
-//   if (isWorkTime) {
-//     await setWorkTimer();
-//     remainingTime = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
-//     isWorkTime = false;
-//     return await setTimers();
-//   }
-//
-//   await setRestTimer();
-//   isWorkTime = true;
-// };
-
 const setupPomodoro = async (command) => {
   switch (command) {
     case Commands.RUN:
