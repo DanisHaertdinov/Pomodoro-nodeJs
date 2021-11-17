@@ -1,7 +1,7 @@
 const readline = require("readline");
 const StupidPlayer = require("stupid-player").StupidPlayer;
 const path = require("path");
-const Timer = require("./timer");
+const Timer = require("./utils").Timer;
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -36,12 +36,9 @@ const playSound = (soundPath, duration = 10) => {
     });
 };
 
-const pomodoroWorkTimer = new Timer();
-const pomodoroRestTimer = new Timer();
-let activeTimer = null;
+const pomodoroTimer = new Timer();
 let pomodoroCount = 0;
-let remainingTime = WORK_TIME;
-let isWorkTime = true;
+let isPomodoroRunning = false;
 
 const isLongRestTime = () => {
   return pomodoroCount / LONG_REST_COUNT === 0;
@@ -51,59 +48,36 @@ const sendMessage = (message) => {
   console.log(message);
 };
 
-const setWorkTimer = async () => {
-  activeTimer = pomodoroWorkTimer;
-  const message = isLongRestTime()
-    ? `take a short break`
-    : `well done take a long break`;
-
-  await pomodoroWorkTimer.start(remainingTime);
-
-  sendMessage(message);
-  playSound(SOUND_PATH);
-};
-
-const setRestTimer = async () => {
-  activeTimer = pomodoroRestTimer;
-
-  await pomodoroRestTimer.start(remainingTime);
-
-  sendMessage(`prepare to new challenge`);
-  playSound(SOUND_PATH);
-  pomodoroCount++;
-};
-
-const setTimers = async () => {
-  if (isWorkTime) {
-    await setWorkTimer();
-    remainingTime = isLongRestTime() ? LONG_REST_TIME : REST_TIME;
-    isWorkTime = false;
-    return await setTimers();
-  }
-
-  await setRestTimer();
-  isWorkTime = true;
-};
-
 const setupPomodoro = async (command) => {
   switch (command) {
     case Commands.RUN:
-      if (activeTimer !== null) {
+      if (isPomodoroRunning) {
         return;
       }
       sendMessage(`Pomodoro starts`);
-      await setTimers();
+
+      await pomodoroTimer.start(WORK_TIME);
+      sendMessage(
+        isLongRestTime() ? `take a short break` : `well done take a long break`
+      );
+      playSound(SOUND_PATH);
+
+      await pomodoroTimer.start(isLongRestTime() ? LONG_REST_TIME : REST_TIME);
+      sendMessage(`prepare to new challenge`);
+      playSound(SOUND_PATH);
+      pomodoroCount++;
+      isPomodoroRunning = false;
       break;
     case Commands.PAUSE:
-      activeTimer.pause();
-      remainingTime = activeTimer.remainingTime;
+      pomodoroTimer.pause();
+
       sendMessage(
-        `on pause ${activeTimer.remainingTime / 1000} seconds remaining`
+        `on pause ${pomodoroTimer.remainingTime / 1000} seconds remaining`
       );
       break;
     case Commands.RESUME:
       sendMessage(`Pomodoro resume`);
-      await setTimers();
+      pomodoroTimer.resume();
   }
 };
 
@@ -118,3 +92,41 @@ const main = () => {
 };
 
 main();
+
+// module.exports = class Deferred {
+//   constructor() {
+//     this._promise = new Promise((resolve) => (this._resolve = resolve));
+//   }
+//
+//   run() {
+//     this._resolve();
+//   }
+//
+//   async wait() {
+//     return this._promise;
+//   }
+// };
+//
+// let deferred = null;
+// deferred.run = () => {};
+//
+// const tasksMap = {
+//   work: () => {},
+// };
+//
+// const main2 = async () => {
+//   const doTask = async (task) => {
+//     tasksMap[task]();
+//   };
+//
+//   const tasks = [`work`, `rest`];
+//   // eslint-disable-next-line no-constant-condition
+//   while (true) {
+//     for (const task of tasks) {
+//       if (task === `rest`) {
+//         await deferred.wait();
+//       }
+//       await doTask(task);
+//     }
+//   }
+// };
